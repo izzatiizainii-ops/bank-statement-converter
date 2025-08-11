@@ -1,0 +1,775 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Bank Statement to Excel Converter</title>
+    <meta name="description" content="Free online tool to convert bank statement PDFs to Excel format. Privacy-focused, client-side processing.">
+    <style>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+            color: white;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            margin: 0;
+            font-size: 2.5em;
+            font-weight: 300;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            opacity: 0.9;
+            font-size: 1.1em;
+        }
+        
+        .features {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+        }
+        
+        .feature-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border-left: 4px solid #3498db;
+            text-align: center;
+        }
+        
+        .feature-icon {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+        
+        .upload-section {
+            padding: 20px 30px;
+            background: #f8f9fa;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .upload-area {
+            border: 2px dashed #3498db;
+            border-radius: 10px;
+            padding: 40px;
+            text-align: center;
+            background: white;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: #2980b9;
+            background: #f8f9ff;
+        }
+        
+        .upload-area.dragover {
+            border-color: #27ae60;
+            background: #f0fff4;
+        }
+        
+        .upload-icon {
+            font-size: 3em;
+            color: #3498db;
+            margin-bottom: 15px;
+        }
+        
+        .upload-text {
+            font-size: 1.2em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+        
+        .upload-subtext {
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .processing {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #3498db;
+        }
+        
+        .processing .spinner {
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 15px;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .error-message {
+            background: #f8d7da;
+            color: #721c24;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .success-message {
+            background: #d4edda;
+            color: #155724;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 15px 0;
+            display: none;
+        }
+        
+        .results-section {
+            padding: 20px 30px;
+            display: none;
+        }
+        
+        .summary {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 10px;
+            margin-bottom: 20px;
+        }
+        
+        .summary-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+        }
+        
+        .summary-item {
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        .summary-item h3 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+            font-size: 0.9em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .summary-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            color: #3498db;
+        }
+        
+        .credit { color: #27ae60; }
+        .debit { color: #e74c3c; }
+        
+        .controls {
+            padding: 20px 0;
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+            justify-content: center;
+        }
+        
+        .btn {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
+        }
+        
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(52, 152, 219, 0.3);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #27ae60 0%, #2ecc71 100%);
+        }
+        
+        .btn-success:hover {
+            box-shadow: 0 10px 20px rgba(46, 204, 113, 0.3);
+        }
+        
+        .table-container {
+            overflow-x: auto;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 20px 0;
+            background: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        }
+        
+        th {
+            background: linear-gradient(135deg, #34495e 0%, #2c3e50 100%);
+            color: white;
+            padding: 15px 12px;
+            text-align: left;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            font-size: 0.9em;
+        }
+        
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #f1f2f6;
+            transition: background-color 0.2s ease;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .amount {
+            text-align: right;
+            font-weight: 600;
+        }
+        
+        .balance {
+            text-align: right;
+            font-weight: bold;
+            color: #2c3e50;
+        }
+        
+        .type-badge {
+            padding: 4px 8px;
+            border-radius: 12px;
+            font-size: 0.8em;
+            font-weight: 500;
+            text-transform: uppercase;
+        }
+        
+        .type-credit {
+            background: #d4edda;
+            color: #155724;
+        }
+        
+        .type-debit {
+            background: #f8d7da;
+            color: #721c24;
+        }
+        
+        .type-balance {
+            background: #d1ecf1;
+            color: #0c5460;
+        }
+        
+        .footer {
+            padding: 30px;
+            background: #2c3e50;
+            color: white;
+            text-align: center;
+        }
+        
+        .privacy-note {
+            background: #e8f5e8;
+            border: 1px solid #4caf50;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 20px 0;
+            text-align: center;
+        }
+        
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: stretch;
+            }
+            
+            .btn {
+                text-align: center;
+            }
+            
+            table {
+                font-size: 0.9em;
+            }
+            
+            th, td {
+                padding: 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏦 Bank Statement to Excel Converter</h1>
+            <p>Free, Privacy-Focused PDF to Excel Conversion Tool</p>
+        </div>
+        
+        <div class="features">
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon">🔒</div>
+                    <strong>100% Private</strong><br>
+                    All processing happens in your browser
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">⚡</div>
+                    <strong>Fast & Free</strong><br>
+                    Instant conversion, no fees
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">📊</div>
+                    <strong>Excel Ready</strong><br>
+                    Perfect formatting for spreadsheets
+                </div>
+                <div class="feature-item">
+                    <div class="feature-icon">🌍</div>
+                    <strong>No Signup</strong><br>
+                    Use immediately, no registration
+                </div>
+            </div>
+        </div>
+        
+        <div class="upload-section">
+            <h3 style="margin: 0 0 20px 0; color: #2c3e50; text-align: center;">📄 Upload Your Bank Statement PDF</h3>
+            <div class="privacy-note">
+                <strong>🔒 Your Privacy is Protected:</strong> PDFs are processed entirely in your browser. No files are uploaded to any server.
+            </div>
+            <div class="upload-area" onclick="document.getElementById('pdfInput').click();" 
+                 ondrop="handleDrop(event)" ondragover="handleDragOver(event)" ondragleave="handleDragLeave(event)">
+                <div class="upload-icon">📄</div>
+                <div class="upload-text">Click to upload or drag & drop PDF here</div>
+                <div class="upload-subtext">Supports most bank statement formats (PDF only)</div>
+                <input type="file" id="pdfInput" class="file-input" accept=".pdf" onchange="handleFileSelect(event)">
+            </div>
+            <div class="processing" id="processing">
+                <div class="spinner"></div>
+                <div>Processing PDF... Please wait</div>
+            </div>
+            <div class="error-message" id="errorMessage"></div>
+            <div class="success-message" id="successMessage"></div>
+        </div>
+        
+        <div class="results-section" id="resultsSection">
+            <div class="summary">
+                <h3 style="margin: 0 0 20px 0; color: #2c3e50; text-align: center;">📊 Statement Summary</h3>
+                <div class="summary-grid">
+                    <div class="summary-item">
+                        <h3>Beginning Balance</h3>
+                        <div class="summary-value" id="beginBalance">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Ending Balance</h3>
+                        <div class="summary-value" id="endBalance">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Total Credits</h3>
+                        <div class="summary-value credit" id="totalCredits">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Total Debits</h3>
+                        <div class="summary-value debit" id="totalDebits">-</div>
+                    </div>
+                    <div class="summary-item">
+                        <h3>Net Change</h3>
+                        <div class="summary-value" id="netChange">-</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="controls">
+                <button class="btn" onclick="downloadCSV()">📊 Download CSV</button>
+                <button class="btn btn-success" onclick="copyToClipboard()">📋 Copy for Excel</button>
+                <span style="color: #7f8c8d;">
+                    📈 Total Transactions: <strong id="transactionCount">0</strong>
+                </span>
+            </div>
+            
+            <div class="table-container">
+                <table id="transactionTable">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Description</th>
+                            <th>Amount</th>
+                            <th>Balance</th>
+                            <th>Type</th>
+                        </tr>
+                    </thead>
+                    <tbody id="transactionBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>💡 <strong>How it works:</strong> Upload your PDF → Get Excel-ready data → Download or copy to spreadsheet</p>
+            <p style="margin-top: 15px; opacity: 0.8; font-size: 0.9em;">
+                Built with privacy in mind. No data stored. No tracking. Open source.
+            </p>
+        </div>
+    </div>
+
+    <script>
+        let currentTransactions = [];
+
+        // PDF Processing Functions
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            e.currentTarget.classList.remove('dragover');
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                processPDF(files[0]);
+            }
+        }
+
+        function handleFileSelect(e) {
+            const file = e.target.files[0];
+            if (file) {
+                processPDF(file);
+            }
+        }
+
+        async function processPDF(file) {
+            if (file.type !== 'application/pdf') {
+                showError('Please upload a PDF file.');
+                return;
+            }
+
+            showProcessing(true);
+            hideMessages();
+
+            try {
+                // Load PDF.js library if not already loaded
+                if (typeof pdfjsLib === 'undefined') {
+                    await loadPDFJS();
+                }
+
+                const arrayBuffer = await file.arrayBuffer();
+                const pdf = await pdfjsLib.getDocument(arrayBuffer).promise;
+                
+                let fullText = '';
+                for (let i = 1; i <= pdf.numPages; i++) {
+                    const page = await pdf.getPage(i);
+                    const textContent = await page.getTextContent();
+                    const pageText = textContent.items.map(item => item.str).join(' ');
+                    fullText += pageText + '\n';
+                }
+
+                // Extract transactions from the text
+                const transactions = extractTransactionsFromText(fullText, file.name);
+                
+                if (transactions.length > 0) {
+                    currentTransactions = transactions;
+                    showSuccess(`Successfully processed ${transactions.length} transactions from ${file.name}`);
+                    displayResults();
+                } else {
+                    showError('No transactions found in the PDF. Please check if this is a valid bank statement.');
+                }
+
+            } catch (error) {
+                console.error('PDF processing error:', error);
+                showError('Failed to process PDF. Please try again or check if the file is a valid bank statement.');
+            } finally {
+                showProcessing(false);
+            }
+        }
+
+        async function loadPDFJS() {
+            return new Promise((resolve, reject) => {
+                const script = document.createElement('script');
+                script.src = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js';
+                script.onload = () => {
+                    pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
+                    resolve();
+                };
+                script.onerror = reject;
+                document.head.appendChild(script);
+            });
+        }
+
+        function extractTransactionsFromText(text, filename) {
+            const transactions = [];
+            const lines = text.split('\n').filter(line => line.trim());
+            
+            // Look for beginning balance
+            let beginningBalance = '';
+            const beginBalanceMatch = text.match(/BEGINNING BALANCE\s+([\d,]+\.?\d*)/i) || 
+                                   text.match(/BALANCE\s+B\/F\s+([\d,]+\.?\d*)/i) ||
+                                   text.match(/OPENING BALANCE\s+([\d,]+\.?\d*)/i);
+            
+            if (beginBalanceMatch) {
+                beginningBalance = beginBalanceMatch[1];
+                transactions.push({
+                    date: "Beginning",
+                    description: "BEGINNING BALANCE",
+                    amount: "",
+                    balance: beginningBalance,
+                    type: "Balance"
+                });
+            }
+
+            // Enhanced transaction pattern to catch various formats
+            const patterns = [
+                // Standard format: DD/MM DESCRIPTION AMOUNT BALANCE
+                /(\d{2}\/\d{2})\s+(.*?)\s+([\d,]+\.?\d*[+-]?)\s+([\d,]+\.?\d*)/g,
+                // Alternative format: DD-MM-YYYY DESCRIPTION AMOUNT BALANCE
+                /(\d{2}[-\/]\d{2}[-\/]\d{2,4})\s+(.*?)\s+([\d,]+\.?\d*[+-]?)\s+([\d,]+\.?\d*)/g,
+                // Format with explicit + or - signs
+                /(\d{2}\/\d{2})\s+(.*?)\s+([+-]?[\d,]+\.?\d*)\s+([\d,]+\.?\d*)/g
+            ];
+
+            patterns.forEach(pattern => {
+                let match;
+                while ((match = pattern.exec(text)) !== null) {
+                    const [, date, description, amount, balance] = match;
+                    
+                    // Clean up description
+                    const cleanDesc = description.replace(/\s+/g, ' ').trim();
+                    
+                    // Skip if description seems invalid
+                    if (cleanDesc.length < 3 || /^\d+$/.test(cleanDesc)) continue;
+                    
+                    // Determine transaction type and format amount
+                    let transType = 'Credit';
+                    let formattedAmount = amount.replace(/[+-]/g, '');
+                    
+                    if (amount.includes('-') || 
+                        cleanDesc.toLowerCase().includes('debit') || 
+                        cleanDesc.toLowerCase().includes('withdrawal') ||
+                        cleanDesc.toLowerCase().includes('fee') ||
+                        cleanDesc.toLowerCase().includes('charge')) {
+                        transType = 'Debit';
+                        formattedAmount = '-' + formattedAmount;
+                    }
+
+                    transactions.push({
+                        date: date.replace(/[-]/g, '/'),
+                        description: cleanDesc,
+                        amount: formattedAmount,
+                        balance: balance,
+                        type: transType
+                    });
+                }
+            });
+
+            // Remove duplicates based on date + amount + balance
+            const unique = transactions.filter((trans, index, self) => 
+                index === self.findIndex(t => 
+                    t.date === trans.date && 
+                    t.amount === trans.amount && 
+                    t.balance === trans.balance
+                )
+            );
+
+            return unique;
+        }
+
+        function displayResults() {
+            document.getElementById('resultsSection').style.display = 'block';
+            calculateSummary();
+            populateTable();
+            
+            // Scroll to results
+            document.getElementById('resultsSection').scrollIntoView({ 
+                behavior: 'smooth' 
+            });
+        }
+
+        function calculateSummary() {
+            if (currentTransactions.length === 0) return;
+            
+            const beginBalance = currentTransactions[0].balance || '0';
+            const endBalance = currentTransactions[currentTransactions.length - 1].balance || '0';
+            
+            let totalCredits = 0;
+            let totalDebits = 0;
+            
+            currentTransactions.forEach(t => {
+                if (t.type === 'Credit' && t.amount) {
+                    totalCredits += parseFloat(t.amount.replace(/[,]/g, ''));
+                } else if (t.type === 'Debit' && t.amount) {
+                    totalDebits += parseFloat(t.amount.replace(/[,-]/g, ''));
+                }
+            });
+            
+            const netChange = totalCredits - totalDebits;
+            const netChangeStr = netChange >= 0 ? `+${netChange.toLocaleString()}` : netChange.toLocaleString();
+            
+            updateSummary(
+                beginBalance,
+                endBalance,
+                totalCredits.toLocaleString(),
+                totalDebits.toLocaleString(),
+                netChangeStr
+            );
+        }
+
+        function updateSummary(begin, end, credits, debits, net) {
+            document.getElementById('beginBalance').textContent = begin;
+            document.getElementById('endBalance').textContent = end;
+            document.getElementById('totalCredits').textContent = credits;
+            document.getElementById('totalDebits').textContent = debits;
+            document.getElementById('netChange').textContent = net;
+            document.getElementById('transactionCount').textContent = currentTransactions.length;
+            
+            // Update net change color
+            const netElement = document.getElementById('netChange');
+            if (net.includes('+')) {
+                netElement.className = 'summary-value credit';
+            } else if (net.includes('-')) {
+                netElement.className = 'summary-value debit';
+            } else {
+                netElement.className = 'summary-value';
+            }
+        }
+
+        function populateTable() {
+            const tbody = document.getElementById('transactionBody');
+            tbody.innerHTML = '';
+            
+            currentTransactions.forEach(transaction => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td>${transaction.date}</td>
+                    <td>${transaction.description}</td>
+                    <td class="amount">${transaction.amount || '-'}</td>
+                    <td class="balance">${transaction.balance}</td>
+                    <td><span class="type-badge type-${transaction.type.toLowerCase()}">${transaction.type}</span></td>
+                `;
+            });
+        }
+
+        function downloadCSV() {
+            if (currentTransactions.length === 0) {
+                showError('No transactions to download. Please upload a PDF first.');
+                return;
+            }
+
+            const headers = ['Date', 'Description', 'Amount', 'Balance', 'Type'];
+            const csvContent = [
+                headers.join(','),
+                ...currentTransactions.map(t => [
+                    `"${t.date}"`,
+                    `"${t.description.replace(/"/g, '""')}"`,
+                    `"${t.amount || ''}"`,
+                    `"${t.balance}"`,
+                    `"${t.type}"`
+                ].join(','))
+            ].join('\n');
+            
+            const blob = new Blob([csvContent], { type: 'text/csv' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.style.display = 'none';
+            a.href = url;
+            a.download = 'bank_statement_converted.csv';
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+        }
+
+        function copyToClipboard() {
+            if (currentTransactions.length === 0) {
+                showError('No transactions to copy. Please upload a PDF first.');
+                return;
+            }
+
+            const headers = ['Date', 'Description', 'Amount', 'Balance', 'Type'];
+            const tabDelimited = [
+                headers.join('\t'),
+                ...currentTransactions.map(t => [
+                    t.date,
+                    t.description,
+                    t.amount || '',
+                    t.balance,
+                    t.type
+                ].join('\t'))
+            ].join('\n');
+            
+            navigator.clipboard.writeText(tabDelimited).then(() => {
+                const btn = event.target;
+                const originalText = btn.textContent;
+                btn.textContent = '✅ Copied!';
+                btn.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+                setTimeout(() => {
+                    btn.textContent = originalText;
+                    btn.style.background = 'linear-gradient(135deg, #27ae60 0%, #2ecc71 100%)';
+                }, 2000);
+            }).catch(() => {
+                showError('Failed to copy. Please try downloading the CSV instead.');
+            });
+        }
+
+        function showProcessing(show) {
+            document.getElementById('processing').style.display = show ? 'block' : 'none';
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('errorMessage');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+
+        function showSuccess(message) {
+            const successDiv = document.getElementById('successMessage');
+            successDiv.textContent = message;
+            successDiv.style.display = 'block';
+        }
+
+        function hideMessages() {
+            document.getElementById('errorMessage').style.display = 'none';
+            document.getElementById('successMessage').style.display = 'none';
+        }
+    </script>
+</body>
+</html>
